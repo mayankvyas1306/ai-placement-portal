@@ -66,13 +66,16 @@ const generateDsaQuestions = async (req, res, next) => {
     try {
         console.log(`[AI Controller] POST /api/v1/ai/dsa-questions - Incoming Body:`, JSON.stringify(req.body));
         const { topic, difficulty, count = 3 } = req.body;
+
+        if (!topic || !difficulty) {
+            return res.status(400).json({ error: 'topic and difficulty are required' });
+        }
+
         const result = await handleAiRequest(req, 'dsa', prompts.dsa, [topic, difficulty, count]);
 
-        if (result && result.error && result.status === 401) {
-            return res.status(401).json(result);
-        }
-        if (result && result.error && result.success !== false) {
-            return res.status(500).json(result);
+        if (result && result.error) {
+            const status = result.status || 500;
+            return res.status(status).json({ error: result.message || 'AI generation failed' });
         }
 
         return res.json(result);
@@ -86,13 +89,16 @@ const generateInterviewQuestions = async (req, res, next) => {
     try {
         console.log(`[AI Controller] POST /api/v1/ai/interview-questions - Incoming Body:`, JSON.stringify(req.body));
         const { targetRole, experienceLevel, skills } = req.body;
+
+        if (!targetRole || !experienceLevel || !skills || !skills.length) {
+            return res.status(400).json({ error: 'targetRole, experienceLevel, and skills are required' });
+        }
+
         const result = await handleAiRequest(req, 'interview', prompts.interview, [targetRole, experienceLevel, skills]);
 
-        if (result && result.error && result.status === 401) {
-            return res.status(401).json(result);
-        }
-        if (result && result.error && result.success !== false) {
-            return res.status(500).json(result);
+        if (result && result.error) {
+            const status = result.status || 500;
+            return res.status(status).json({ error: result.message || 'AI generation failed' });
         }
 
         return res.json(result);
@@ -106,13 +112,16 @@ const analyzeResume = async (req, res, next) => {
     try {
         console.log(`[AI Controller] POST /api/v1/ai/resume-analyzer - Incoming Body received`);
         const { resumeText, targetRole } = req.body;
+
+        if (!resumeText || !targetRole) {
+            return res.status(400).json({ error: 'resumeText and targetRole are required' });
+        }
+
         const result = await handleAiRequest(req, 'resume_analysis', prompts.resume, [resumeText, targetRole]);
 
-        if (result && result.error && result.status === 401) {
-            return res.status(401).json(result);
-        }
-        if (result && result.error && result.success !== false) {
-            return res.status(500).json(result);
+        if (result && result.error) {
+            const status = result.status || 500;
+            return res.status(status).json({ error: result.message || 'AI generation failed' });
         }
 
         return res.json(result);
@@ -126,15 +135,21 @@ const generateStudyPlan = async (req, res, next) => {
     try {
         console.log(`[AI Controller] POST /api/v1/ai/study-planner - Incoming Body:`, JSON.stringify(req.body));
         const { topic, currentLevel } = req.body;
+
+        if (!topic || !currentLevel) {
+            return res.status(400).json({ error: 'topic and currentLevel are required' });
+        }
+
         const prompt = prompts.studyPlan(topic, currentLevel);
 
         if (!req.user || !req.user._id) {
-            return res.status(401).json({ error: true, message: 'Unauthorized: User not found in request' });
+            return res.status(401).json({ error: 'Unauthorized: User not found in request' });
         }
 
         let aiResponseRaw = await generateGeminiContent(prompt);
         if (typeof aiResponseRaw === 'object' && aiResponseRaw.error) {
-            return res.status(500).json(aiResponseRaw);
+            const status = aiResponseRaw.status || 500;
+            return res.status(status).json({ error: aiResponseRaw.message || 'AI generation failed' });
         }
 
         let parsedJson;

@@ -7,17 +7,28 @@ const StudyPlanner = () => {
     const [topic, setTopic] = useState('');
     const [currentLevel, setCurrentLevel] = useState('Beginner');
     const [plan, setPlan] = useState(null);
+    const [error, setError] = useState('');
 
     const generateData = async (e) => {
         e.preventDefault();
+        setError('');
         setLoading(true);
         try {
             const { data } = await apiClient.post('/ai/study-planner', { topic, currentLevel });
-            setPlan(data);
-        } catch (error) {
-            console.error(error);
-            const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to generate study plan';
-            alert(`Error: ${errorMsg}`);
+            const planData = data.planDetails
+                ? data
+                : {
+                    planDetails: data.planDetails || data,
+                    topic: data.topic || topic
+                };
+            setPlan(planData);
+        } catch (err) {
+            console.error(err);
+            setError(
+                err.response?.data?.error ||
+                err.response?.data?.message ||
+                'Failed to generate plan. Check your API key or try again.'
+            );
         } finally {
             setLoading(false);
         }
@@ -62,6 +73,12 @@ const StudyPlanner = () => {
                     </button>
                 </div>
             </form>
+
+            {error && (
+                <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl mt-6">
+                    {error}
+                </div>
+            )}
 
             {plan && plan.planDetails && (
                 <div className="space-y-6 mt-8">

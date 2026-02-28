@@ -1,5 +1,9 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    console.warn('⚠️  WARNING: GEMINI_API_KEY is not set. AI features will not work. Get a key from https://aistudio.google.com/app/apikey');
+}
+
 const generateGeminiContent = async (prompt) => {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
@@ -7,7 +11,7 @@ const generateGeminiContent = async (prompt) => {
 
         console.log(`[Gemini API] Key present: ${isKeyPresent}`);
         if (!isKeyPresent) {
-            return { error: true, message: 'GEMINI_API_KEY is missing or invalid in environment variables.' };
+            return { error: true, status: 400, message: 'GEMINI_API_KEY is missing or invalid in environment variables.' };
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -27,6 +31,7 @@ const generateGeminiContent = async (prompt) => {
         return text;
     } catch (error) {
         console.error('[Gemini API] Detailed Error:', error.message || error);
+        console.error('[Gemini API] Full error object:', JSON.stringify(error, null, 2));
 
         const msg = (error.message || '').includes('API key')
             ? 'Invalid Google Gemini API Key. Please get a real key from Google AI Studio and put it in backend/.env.'

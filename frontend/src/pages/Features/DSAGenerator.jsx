@@ -4,20 +4,25 @@ import { Loader2, CheckCircle2, Lightbulb } from 'lucide-react';
 
 const DSAGenerator = () => {
     const [loading, setLoading] = useState(false);
-    const [topic, setTopic] = useState('');
-    const [difficulty, setDifficulty] = useState('Medium');
+    const [topic, setTopic] = useState('arrays');
+    const [difficulty, setDifficulty] = useState('Easy');
     const [questions, setQuestions] = useState([]);
+    const [error, setError] = useState('');
 
     const generateData = async (e) => {
         e.preventDefault();
+        setError('');
         setLoading(true);
         try {
             const { data } = await apiClient.post('/ai/dsa-questions', { topic, difficulty, count: 3 });
             setQuestions(data.questions || []);
-        } catch (error) {
-            console.error(error);
-            const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to generate questions';
-            alert(`Error: ${errorMsg}`);
+        } catch (err) {
+            console.error(err);
+            setError(
+                err.response?.data?.error ||
+                err.response?.data?.message ||
+                'Failed to generate. Check your API key or try again.'
+            );
         } finally {
             setLoading(false);
         }
@@ -61,6 +66,12 @@ const DSAGenerator = () => {
                     </button>
                 </div>
             </form>
+
+            {error && (
+                <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl mt-6">
+                    {error}
+                </div>
+            )}
 
             {questions.length > 0 && (
                 <div className="space-y-6 mt-8">

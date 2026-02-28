@@ -7,17 +7,22 @@ const ResumeAnalyzer = () => {
     const [targetRole, setTargetRole] = useState('');
     const [resumeText, setResumeText] = useState('');
     const [analysis, setAnalysis] = useState(null);
+    const [error, setError] = useState('');
 
     const generateData = async (e) => {
         e.preventDefault();
+        setError('');
         setLoading(true);
         try {
             const { data } = await apiClient.post('/ai/analyze-resume', { resumeText, targetRole });
             setAnalysis(data);
-        } catch (error) {
-            console.error(error);
-            const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to analyze resume';
-            alert(`Error: ${errorMsg}`);
+        } catch (err) {
+            console.error(err);
+            setError(
+                err.response?.data?.error ||
+                err.response?.data?.message ||
+                'Failed to analyze. Check your API key or try again.'
+            );
         } finally {
             setLoading(false);
         }
@@ -59,6 +64,12 @@ const ResumeAnalyzer = () => {
                     </button>
                 </div>
             </form>
+
+            {error && (
+                <div className="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl mt-6">
+                    {error}
+                </div>
+            )}
 
             {analysis && (
                 <div className="space-y-6 mt-8">
